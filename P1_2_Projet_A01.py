@@ -5,7 +5,7 @@ def generate_correct_answers(questions):
     """
     Génére la liste des bonnes réponses du questionnaire et calcule le score maximal
 
-    `pre` - un questionnaire "questions"
+    `pre` - un questionnaire "questions" construit avec build_questionnaire()
 
     `post` - retourne une liste des indexes des bonnes réponses de chaque question dans l'ordre et le score maximal qu'il est possible d'obtenir
     """
@@ -24,6 +24,8 @@ def parse_answer_string(answer_string, max_answer):
     """
     Convertit les réponses de l'utilisateur (sous forme de lettres) en un set d'entiers correspondant aux indexes des réponses
     
+    (Exemple: transforme `"ABD"` en `{0, 1, 3}`)
+
     ---
     `pre`:
     
@@ -50,18 +52,18 @@ def generate_box(text):
     """
     box  = "╭" + "─" * (len(text)+2) + "╮\n"
     box += "│ " + text + " │\n"
-    box += "╰" + "─" * (len(text)+2) + "╯\n"
+    box += "╰" + "─" * (len(text)+2) + "╯"
     return box
 
 def input_with_retry(question, valid, retry="Réessayez. "):
     """
-    Demande une entrée de l'utilisateur et redemande si la réponse donnée n'est pas valide
+    Demande une entrée de l'utilisateur avec input() et redemande jusqu'à obtenir une réponse qui est valide
 
     ---
     `pre`:
     
     - un string "question": la question à poser à l'utilisateur
-    - une liste "valid": une fonction lambda qui retourne True si la réponse est valide
+    - une liste "valid": une fonction lambda qui retourne True si la réponse (son argument) est valide
     - un string "retry" (optionnel): le texte à montrer à l'utilisateur lorsqu'il réessaye
     ---
 
@@ -78,11 +80,26 @@ try:
     filename = input("Lire quel fichier ? ")
     q = qcm.build_questionnaire(filename)
     user_answers = []
+
+    # un premier passage dans le questionnaire
+    line_length = 0
+    for i in range(len(q)):
+        # on détérmine la longueur des lignes à dessiner, en fonction de la longueur maximale des questions
+        if (len(q[i][0]) + 8) > line_length:
+            line_length = len(q[i][0]) + 8
+            
+        # !!! on met les réponses dans un ordre aléatoire avec la fonction shuffle dans random
+        shuffle(q[i][1])
+
+    correct_answers, max_score = generate_correct_answers(q)
 except:
     print("Une erreur est survenue lors de la lecture du fichier.")
-    print("Vérifiez que le fichier existe et que vous n'avez fait aucune faute de frappe.")
+    print("Vérifiez que le fichier existe et qu'il est correctement formatté.")
 else:
-    print("Lecture terminée sans erreurs.")
+    # il y a des erreurs qu'on ne peut pas attraper avec le try-except sans modifier qcm.py
+    # qcm.py affiche ses erreurs dans la console mais finit quand même par charger le questionnaire
+    # juste avec des questions ou des réponses qui manquent
+    print("Lecture du fichier terminée.")
     print("")
 
     comparatif = input_with_retry("Afficher le score final avec (1) ou sans (2) le mode comparatif ? ", lambda x: x in ("1", "2"))
@@ -96,38 +113,31 @@ else:
     print(filename, "contient", str(len(q)), "questions.")
     print("Pour chaque question, tapez les lettres qui correspondent aux réponses qui vous semblent correctes, puis appuyez sur la touche ENTER.")
 
-    # un premier passage dans le questionnaire
-    line_length = 0
-    for i in range(len(q)):
-        # on détérmine la longueur des lignes à dessiner, en fonction de la longueur maximale des questions
-        if (len(q[i][0]) + 4) > line_length:
-            line_length = len(q[i][0]) + 4
-            
-        # !!! on met les réponses dans un ordre aléatoire avec la fonction shuffle dans random
-        shuffle(q[i][1])
-
-    correct_answers, max_score = generate_correct_answers(q)
-
     # on pose les questions à l'utilisateur
     for i, question in enumerate(q):
         a = question[1]
         print("─" * line_length)
 
         # affiche la question
-        print(str(i+1), "|", question[0])
+        print(generate_box(str(i+1) + " | " + question[0]))
+
+        # convertit les indexes des propositions en lettres majuscules
+        valid_letters = [chr(65 + i) for i in range(len(a))]
 
         # affiche les propositions
         for j, answer in enumerate(a):
-            print("  " + chr(65 +j) + " | " + answer[0])
+            print("  " + valid_letters[j] + " | " + answer[0])
         
         print("")
 
         if (len(correct_answers[i]) > 1):
             print("Plusieurs réponses sont correctes.")
 
-        valid_letters = [chr(65 + i) for i in range(len(a))]
         answer_string = input_with_retry(
             "Votre réponse: ",
+            # cette fonction lambda vérifie que:
+            # 1. chaque caractère de la réponse est dans valid_letters
+            # 2. il y a 1 seul caractère dans la réponse (sauf si c'est une QRM)
             lambda x: all(letter.upper() in valid_letters for letter in x) and (len(correct_answers[i]) > 1 or len(x) == 1),
             "Réponse invalide.\nRéessayez : "
         )
@@ -146,7 +156,7 @@ else:
             else:
                 score_malus -= 1
 
-    # limiter à 0
+    # éviter une cote négative
     score_malus = max(0, score_malus)
 
     if comparatif or not malus: print(generate_box("Votre score est " + str(score)+"/"+str(max_score) + " (sans malus)"))
