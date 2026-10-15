@@ -3,17 +3,22 @@ from random import shuffle
 
 def generate_correct_answers(questions):
     """
-    Génére la liste des bonnes réponses du questionnaire
+    Génére la liste des bonnes réponses du questionnaire et calcule le score maximal
 
     `pre` - un questionnaire "questions"
 
-    `post` - retourne une liste des indexes des bonnes réponses de chaque question dans l'ordre
+    `post` - retourne une liste des indexes des bonnes réponses de chaque question dans l'ordre et le score maximal qu'il est possible d'obtenir
     """
+    max_score = 0
     correct_answers = []
     for question in questions:
         a = question[1]
-        correct_answers.append(set(i for i in range(len(a)) if a[i][1]))
-    return correct_answers
+        correct_answers.append(set())
+        for i in range(len(a)):
+            if a[i][1]:
+                correct_answers[-1].add(i)
+                max_score += 1
+    return correct_answers, max_score
 
 def parse_answer_string(answer_string, max_answer):
     """
@@ -30,7 +35,7 @@ def parse_answer_string(answer_string, max_answer):
     """
     answer_set = set()
     for char in answer_string:
-        i = ord(char) - 65
+        i = ord(char.upper()) - 65
         if i >= 0 and i < max_answer:
             answer_set.add(i)
     return answer_set
@@ -56,14 +61,14 @@ def input_with_retry(question, valid, retry="Réessayez. "):
     `pre`:
     
     - un string "question": la question à poser à l'utilisateur
-    - une liste "valid": la liste de réponses valides  
+    - une liste "valid": une fonction lambda qui retourne True si la réponse est valide
     - un string "retry" (optionnel): le texte à montrer à l'utilisateur lorsqu'il réessaye
     ---
 
     `post` - retourne la réponse valide donnée par l'utilisateur
     """
     answer = input(question)
-    while not answer in valid:
+    while not valid(answer):
         answer = input(retry)
     return answer
 
@@ -80,10 +85,10 @@ else:
     print("Lecture terminée sans erreurs.")
     print("")
 
-    malus = input_with_retry("Calculer le score final avec (1) ou sans (2) malus ? ", ("1", "2"))
+    malus = input_with_retry("Calculer le score final avec (1) ou sans (2) malus ? ", lambda x: x in ("1", "2"))
     malus = not bool(int(malus)-1)
 
-    comparatif = input_with_retry("Afficher le score final avec (1) ou sans (2) le mode comparatif ? ", ("1", "2"))
+    comparatif = input_with_retry("Afficher le score final avec (1) ou sans (2) le mode comparatif ? ", lambda x: x in ("1", "2"))
     comparatif = not bool(int(comparatif)-1)
 
     print("")
@@ -100,7 +105,7 @@ else:
         # !!! on met les réponses dans un ordre aléatoire avec la fonction shuffle dans random
         shuffle(q[i][1])
 
-    correct_answers = generate_correct_answers(q)
+    correct_answers, max_score = generate_correct_answers(q)
 
     # on pose les questions à l'utilisateur
     for i, question in enumerate(q):
@@ -116,13 +121,28 @@ else:
         
         print("")
 
-        answer_set = parse_answer_string(input("Votre réponse: "), len(a))
+        if (len(correct_answers[i]) > 1):
+            print("Plusieurs réponses sont correctes.")
+
+        valid_letters = [chr(65 + i) for i in range(len(a))]
+        answer_string = input_with_retry(
+            "Votre réponse: ",
+            lambda x: all(letter.upper() in valid_letters for letter in x) and (len(correct_answers[i]) > 1 or len(x) == 1),
+            "Réponse invalide.\nRéessayez : "
+        )
+        answer_set = parse_answer_string(answer_string, len(a))
         user_answers.append(answer_set)
 
     print("─" * line_length)
 
     score = 0
     for i in range(len(user_answers)):
-        if user_answers[i] == correct_answers[i]:
-            score += 1
-    print(generate_box("Votre score est " + str(score)+"/"+str(len(correct_answers))))
+        for a in user_answers[i]:
+            if a in correct_answers[i]:
+                score += 1
+            elif malus:
+                score -= 1
+
+    # limiter à 0
+    score = max(0, score)
+    print(generate_box("Votre score est " + str(score)+"/"+str(max_score)))
