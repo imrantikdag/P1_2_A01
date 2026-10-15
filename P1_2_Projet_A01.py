@@ -85,11 +85,12 @@ else:
     print("Lecture terminée sans erreurs.")
     print("")
 
-    malus = input_with_retry("Calculer le score final avec (1) ou sans (2) malus ? ", lambda x: x in ("1", "2"))
-    malus = not bool(int(malus)-1)
-
     comparatif = input_with_retry("Afficher le score final avec (1) ou sans (2) le mode comparatif ? ", lambda x: x in ("1", "2"))
     comparatif = not bool(int(comparatif)-1)
+
+    if not comparatif:
+        malus = input_with_retry("Calculer le score final avec (1) ou sans (2) malus ? ", lambda x: x in ("1", "2"))
+        malus = not bool(int(malus)-1)
 
     print("")
     print(filename, "contient", str(len(q)), "questions.")
@@ -136,13 +137,17 @@ else:
     print("─" * line_length)
 
     score = 0
+    score_malus = 0
     for i in range(len(user_answers)):
         for a in user_answers[i]:
             if a in correct_answers[i]:
                 score += 1
-            elif malus:
-                score -= 1
+                score_malus += 1
+            else:
+                score_malus -= 1
 
     # limiter à 0
-    score = max(0, score)
-    print(generate_box("Votre score est " + str(score)+"/"+str(max_score)))
+    score_malus = max(0, score_malus)
+
+    if comparatif or not malus: print(generate_box("Votre score est " + str(score)+"/"+str(max_score) + " (sans malus)"))
+    if comparatif or malus: print(generate_box("Votre score est " + str(score_malus)+"/"+str(max_score) + " (avec malus)"))
