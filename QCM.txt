@@ -1,16 +1,16 @@
 Q|Quelle est la couleur du cheval blanc de Napoléon ?
-A|Blanc|V
-A|Bleu|X
-A|Violet|X
+A|Blanc|V|C'était dans la question
+A|Bleu|X|C'est dans la question
+A|Violet|X|C'EST DANS LA QUESTION
 
 Q|Combien de jours dans un mois ?
-A|28|V
-A|29|V
-A|30|V
-A|31|V
-A|25|X
+A|28|V|Le mois de février a 28 jours
+A|29|V|Le mois de février a 29 jours tous les 4 ans
+A|30|V|Les mois d'avril, juin, septembre et novembre ont 30 jours
+A|31|V|Les mois de janvier, mars, mai, juillet, août, octobre et décembre ont 31 jours
+A|25|X|Aucun mois n'a 25 jours
 
 Q|Quel est l'équivalent américain de l'ESA (European Space Agency) ?
 A|NASA|V
 A|NSA|X|La NSA est la National Security Agency
-A|FBI|X
+A|FBI|X|Le FBI est le Federal Bureau of Investigation
