@@ -74,21 +74,21 @@ def input_with_retry(question, valid, retry="Réessayez. "):
         answer = input(retry)
     return answer
 
-print(generate_box("PROGRAMME DE QCM (sans nom)")) # mettez un nom?
+print(generate_box("Programme de QCM"))
 
 try:
     filename = input("Lire quel fichier ? ")
     q = qcm.build_questionnaire(filename)
     user_answers = []
 
-    # un premier passage dans le questionnaire
+    # Un premier passage dans le questionnaire
     line_length = 0
     for i in range(len(q)):
-        # on détérmine la longueur des lignes à dessiner, en fonction de la longueur maximale des questions
+        # On détérmine la longueur des lignes à dessiner, en fonction de la longueur maximale des questions
         if (len(q[i][0]) + 8) > line_length:
             line_length = len(q[i][0]) + 8
             
-        # !!! on met les réponses dans un ordre aléatoire avec la fonction shuffle dans random
+        # On mélange la liste de réponses avec la fonction `shuffle` dans `random`
         shuffle(q[i][1])
 
     correct_answers, max_score = generate_correct_answers(q)
@@ -96,49 +96,52 @@ except:
     print("Une erreur est survenue lors de la lecture du fichier.")
     print("Vérifiez que le fichier existe et qu'il est correctement formatté.")
 else:
-    # il y a des erreurs qu'on ne peut pas attraper avec le try-except sans modifier qcm.py
-    # qcm.py affiche ses erreurs dans la console mais finit quand même par charger le questionnaire
-    # juste avec des questions ou des réponses qui manquent
+    # Il y a des erreurs qu'on ne peut pas attraper avec le try-except sans modifier qcm.py
+    # Ces erreurs peuvent arriver si une ligne du fichier est mal formée
+    # qcm.py affiche ces erreurs dans la console (au lieu de `raise` une exception),
+    # mais finit quand même par charger le questionnaire, avec des questions ou des réponses qui manquent
     print("Lecture du fichier terminée.")
     print("")
 
     comparatif = input_with_retry("Afficher le score final avec (1) ou sans (2) le mode comparatif ? ", lambda x: x in ("1", "2"))
-    comparatif = not bool(int(comparatif)-1)
+    comparatif = not bool(int(comparatif)-1) # Cette ligne convertit 1 en True et 2 en False
 
     if not comparatif:
         malus = input_with_retry("Calculer le score final avec (1) ou sans (2) malus ? ", lambda x: x in ("1", "2"))
-        malus = not bool(int(malus)-1)
+        malus = not bool(int(malus)-1) # idem
 
     print("")
     print(f"{filename} contient {str(len(q))} questions.")
     print("Pour chaque question, tapez les lettres qui correspondent aux réponses qui vous semblent correctes, puis appuyez sur la touche ENTER.")
 
-    # on pose les questions à l'utilisateur
+    # On pose les questions à l'utilisateur
     for i, question in enumerate(q):
         a = question[1]
         print("─" * line_length)
 
-        # affiche la question
+        # Affiche la question
         print(generate_box(f"{str(i+1)} | {question[0]}"))
 
-        # convertit les indexes des propositions en lettres majuscules
+        # Convertit les indexes des propositions en lettres majuscules
         valid_letters = [chr(65 + i) for i in range(len(a))]
 
-        # affiche les propositions
+        # Affiche les propositions
         for j, answer in enumerate(a):
             print(f"  {valid_letters[j]} | {answer[0]}")
         
         print("")
 
+        # `len(correct_answers[i]) > 1` indique que c'est une QRM
         if (len(correct_answers[i]) > 1):
             print("Plusieurs réponses sont correctes.")
 
+        # On demande la réponse de l'utilisateur
         answer_string = input_with_retry(
             "Votre réponse: ",
-            # cette fonction lambda vérifie que:
-            # 1. chaque caractère de la réponse est dans valid_letters
-            # 2. il y a 1 seul caractère dans la réponse (sauf si c'est une QRM)
-            lambda x: all(letter.upper() in valid_letters for letter in x) and (len(correct_answers[i]) > 1 or len(x) == 1),
+            # Cette fonction lambda vérifie que:
+            # (1) Tous les caractères de la réponse sont inclus dans valid_letters
+            # ET (2) il y a 1 seul caractère dans la réponse, OU c'est une QRM
+            lambda x: all(letter.upper() in valid_letters for letter in x) and (len(x) == 1 or len(correct_answers[i]) > 1),
             "Réponse invalide.\nRéessayez : "
         )
         answer_set = parse_answer_string(answer_string, len(a))
@@ -148,15 +151,15 @@ else:
 
     score = 0
     score_malus = 0
-    for i in range(len(user_answers)):
-        for a in user_answers[i]:
-            if a in correct_answers[i]:
-                score += 1
-                score_malus += 1
+    for i in range(len(user_answers)):  # Pour chaque set de réponses donné,
+        for a in user_answers[i]:       # Pour chaque réponse dans le set,
+            if a in correct_answers[i]: # Si la réponse est dans le set de bonnes réponses,
+                score += 1              # on augmente
+                score_malus += 1        # les 2 scores
             else:
-                score_malus -= 1
+                score_malus -= 1        # On pénalise uniquement le score malus pour les mauvaises réponses
 
-    # éviter une cote négative
+    # Éviter une cote négative
     score_malus = max(0, score_malus)
 
     if comparatif or not malus: print(generate_box(f"Votre score est {str(score)}/{str(max_score)} (sans malus)"))
