@@ -110,7 +110,7 @@ else:
         malus = not bool(int(malus)-1)
 
     print("")
-    print(filename, "contient", str(len(q)), "questions.")
+    print(f"{filename} contient {str(len(q))} questions.")
     print("Pour chaque question, tapez les lettres qui correspondent aux réponses qui vous semblent correctes, puis appuyez sur la touche ENTER.")
 
     # on pose les questions à l'utilisateur
@@ -119,14 +119,14 @@ else:
         print("─" * line_length)
 
         # affiche la question
-        print(generate_box(str(i+1) + " | " + question[0]))
+        print(generate_box(f"{str(i+1)} | {question[0]}"))
 
         # convertit les indexes des propositions en lettres majuscules
         valid_letters = [chr(65 + i) for i in range(len(a))]
 
         # affiche les propositions
         for j, answer in enumerate(a):
-            print("  " + valid_letters[j] + " | " + answer[0])
+            print(f"  {valid_letters[j]} | {answer[0]}")
         
         print("")
 
@@ -159,5 +159,5 @@ else:
     # éviter une cote négative
     score_malus = max(0, score_malus)
 
-    if comparatif or not malus: print(generate_box("Votre score est " + str(score)+"/"+str(max_score) + " (sans malus)"))
-    if comparatif or malus: print(generate_box("Votre score est " + str(score_malus)+"/"+str(max_score) + " (avec malus)"))
+    if comparatif or not malus: print(generate_box(f"Votre score est {str(score)}/{str(max_score)} (sans malus)"))
+    if comparatif or malus: print(generate_box(f"Votre score est {str(score_malus)}/{str(max_score)} (avec malus)"))
