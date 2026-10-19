@@ -163,4 +163,4 @@ else:
     score_malus = max(0, score_malus)
 
     if comparatif or not malus: print(generate_box(f"Votre score est {str(score)}/{str(max_score)} (sans malus)"))
-    if comparatif or malus: print(generate_box(f"Votre score est {str(score_malus)}/{str(max_score)} (avec malus)"))
+    if comparatif or malus: print(generate_box(f"Votre score est {str(score_malus)}/{str(max_score)} (avec malus)")) # FIRST COMMENT
